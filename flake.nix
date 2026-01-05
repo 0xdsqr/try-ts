@@ -36,6 +36,7 @@
         in
         {
           default = import ./nix/package.nix { inherit pkgs; };
+          node_modules = import ./nix/deps.nix { inherit pkgs; };
         }
       );
 
@@ -65,23 +66,37 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
+          src = pkgs.lib.cleanSource self;
+          node_modules = import ./nix/deps.nix { inherit pkgs; };
         in
         {
           formatting = (treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix).config.build.check self;
 
           tests = pkgs.stdenv.mkDerivation {
             name = "try-ts-tests";
-            src = self;
+            inherit src;
             nativeBuildInputs = [ pkgs.bun ];
-            buildPhase = ''
+
+            configurePhase = ''
+              runHook preConfigure
               export HOME=$(mktemp -d)
-              bun install --frozen-lockfile
-              bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage
+              cp -r ${node_modules} node_modules
+              chmod -R u+w node_modules
+              runHook postConfigure
             '';
+
+            buildPhase = ''
+              runHook preBuild
+              bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage
+              runHook postBuild
+            '';
+
             installPhase = ''
-              mkdir -p $out
-              cp -r coverage $out/
+              runHook preInstall
+              mkdir -p $out/coverage
+              cp -r coverage/* $out/coverage/ || true
               echo "Tests passed" > $out/result
+              runHook postInstall
             '';
           };
 

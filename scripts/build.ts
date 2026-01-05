@@ -16,4 +16,4 @@ await Bun.build({
   entrypoints,
 })
 
-await $`tsc --outDir dist/types --declaration --emitDeclarationOnly --declarationMap`
+await $`./node_modules/.bin/tsc --outDir dist/types --declaration --emitDeclarationOnly --declarationMap`

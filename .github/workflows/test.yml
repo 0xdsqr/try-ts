@@ -7,7 +7,15 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            system: x86_64-linux
+          - os: macos-latest
+            system: aarch64-darwin
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -15,33 +23,34 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Run flake checks
-        run: nix flake check --print-build-logs
+      - name: Check formatting
+        run: nix build .#checks.${{ matrix.system }}.formatting --print-build-logs
 
-      - name: Build test artifacts
-        run: nix build .#checks.x86_64-linux.tests --print-build-logs
+      - name: Run tests
+        run: nix build .#checks.${{ matrix.system }}.tests --print-build-logs
 
       - name: Copy coverage report
-        run: cp -r result/coverage ./coverage
+        run: cp -rL result/coverage ./coverage || true
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-${{ matrix.system }}
           path: coverage/
           retention-days: 30
-
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: DeterminateSystems/nix-installer-action@main
-
-      - uses: DeterminateSystems/magic-nix-cache-action@main
+          if-no-files-found: ignore
 
       - name: Build package
-        run: nix build --print-build-logs
+        run: nix build .#checks.${{ matrix.system }}.build --print-build-logs
 
-      - name: List build outputs
-        run: ls -la result/
+      - name: Copy build artifacts
+        run: |
+          mkdir -p dist
+          cp -rL result/* dist/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.system }}
+          path: dist/
+          retention-days: 30
