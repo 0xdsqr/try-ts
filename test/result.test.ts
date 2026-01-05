@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test"
 import {
   err,
-  ok,
-  isOk,
+  flatMap,
   isErr,
+  isOk,
   map,
   mapErr,
-  flatMap,
+  match,
+  ok,
   unwrapOr,
   unwrapOrElse,
-  match,
 } from "../source/result"
 
 describe("ok", () => {
