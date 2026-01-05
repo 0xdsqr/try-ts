@@ -1,13 +1,16 @@
-name: Test
+name: Build
 
 on:
   push:
     branches: [main, master]
   pull_request:
-  workflow_call:
 
 jobs:
   test:
+    uses: ./.github/workflows/test.yml
+
+  build:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
@@ -24,16 +27,11 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Check formatting
-        run: nix build .#checks.${{ matrix.system }}.formatting --print-build-logs
+      - name: Build package
+        run: nix build --print-build-logs
 
-      - name: Run tests
-        run: nix build .#checks.${{ matrix.system }}.tests --print-build-logs -o test-result
-
-      - name: Upload coverage
-        if: matrix.system == 'x86_64-linux'
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
-          path: test-result/coverage/
-          if-no-files-found: ignore
+          name: dist-${{ matrix.system }}
+          path: result/
