@@ -23,34 +23,5 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Check formatting
-        run: nix build .#checks.${{ matrix.system }}.formatting --print-build-logs
-
-      - name: Run tests
-        run: nix build .#checks.${{ matrix.system }}.tests --print-build-logs
-
-      - name: Copy coverage report
-        run: cp -rL result/coverage ./coverage || true
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-${{ matrix.system }}
-          path: coverage/
-          retention-days: 30
-          if-no-files-found: ignore
-
-      - name: Build package
-        run: nix build .#checks.${{ matrix.system }}.build --print-build-logs
-
-      - name: Copy build artifacts
-        run: |
-          mkdir -p dist
-          cp -rL result/* dist/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist-${{ matrix.system }}
-          path: dist/
-          retention-days: 30
+      - name: Run all flake checks
+        run: nix flake check --print-build-logs

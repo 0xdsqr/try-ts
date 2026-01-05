@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "./result.ts"
+import { err, ok, type Result } from "./result"
 
 type RetryOptions = {
   times: number

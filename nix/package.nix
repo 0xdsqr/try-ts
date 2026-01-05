@@ -15,8 +15,14 @@ pkgs.stdenv.mkDerivation {
   configurePhase = ''
     runHook preConfigure
     export HOME=$(mktemp -d)
+    # Copy node_modules, preserving symlinks
     cp -r ${node_modules} node_modules
     chmod -R u+w node_modules
+    # Recreate .bin symlinks (they break when copied)
+    rm -rf node_modules/.bin
+    mkdir -p node_modules/.bin
+    ln -s ../typescript/bin/tsc node_modules/.bin/tsc
+    ln -s ../typescript/bin/tsserver node_modules/.bin/tsserver
     runHook postConfigure
   '';
 

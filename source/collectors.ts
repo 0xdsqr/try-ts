@@ -1,4 +1,4 @@
-import { ok, type Result } from "./result.ts"
+import { ok, type Result } from "./result"
 
 function collect<T, E>(results: Result<T, E>[]): Result<T[], E> {
   const values: T[] = []

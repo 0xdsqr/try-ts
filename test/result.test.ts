@@ -1,5 +1,16 @@
 import { describe, expect, test } from "bun:test"
-import { err, ok, Result } from "../source/result.ts"
+import {
+  err,
+  ok,
+  isOk,
+  isErr,
+  map,
+  mapErr,
+  flatMap,
+  unwrapOr,
+  unwrapOrElse,
+  match,
+} from "../source/result"
 
 describe("ok", () => {
   test("creates Ok result with value", () => {
@@ -37,29 +48,29 @@ describe("err", () => {
   })
 })
 
-describe("Result.isOk", () => {
+describe("isOk", () => {
   test("returns true for Ok", () => {
-    expect(Result.isOk(ok(1))).toBe(true)
+    expect(isOk(ok(1))).toBe(true)
   })
 
   test("returns false for Err", () => {
-    expect(Result.isOk(err("fail"))).toBe(false)
+    expect(isOk(err("fail"))).toBe(false)
   })
 })
 
-describe("Result.isErr", () => {
+describe("isErr", () => {
   test("returns true for Err", () => {
-    expect(Result.isErr(err("fail"))).toBe(true)
+    expect(isErr(err("fail"))).toBe(true)
   })
 
   test("returns false for Ok", () => {
-    expect(Result.isErr(ok(1))).toBe(false)
+    expect(isErr(ok(1))).toBe(false)
   })
 })
 
-describe("Result.map", () => {
+describe("map", () => {
   test("transforms Ok value", () => {
-    const result = Result.map(ok(2), (x) => x * 3)
+    const result = map(ok(2), (x) => x * 3)
     expect(result.ok).toBe(true)
     expect(result.ok && result.value).toBe(6)
   })
@@ -68,15 +79,15 @@ describe("Result.map", () => {
     const input = err("fail") as
       | ReturnType<typeof ok<number>>
       | ReturnType<typeof err<string>>
-    const result = Result.map(input, (x) => x * 3)
+    const result = map(input, (x) => x * 3)
     expect(result.ok).toBe(false)
     expect(!result.ok && result.error).toBe("fail")
   })
 })
 
-describe("Result.mapErr", () => {
+describe("mapErr", () => {
   test("transforms Err value", () => {
-    const result = Result.mapErr(err("fail"), (e) => e.toUpperCase())
+    const result = mapErr(err("fail"), (e) => e.toUpperCase())
     expect(result.ok).toBe(false)
     expect(!result.ok && result.error).toBe("FAIL")
   })
@@ -85,18 +96,18 @@ describe("Result.mapErr", () => {
     const input = ok(42) as
       | ReturnType<typeof ok<number>>
       | ReturnType<typeof err<string>>
-    const result = Result.mapErr(input, (e) => e.toUpperCase())
+    const result = mapErr(input, (e) => e.toUpperCase())
     expect(result.ok).toBe(true)
     expect(result.ok && result.value).toBe(42)
   })
 })
 
-describe("Result.flatMap", () => {
+describe("flatMap", () => {
   const divide = (a: number, b: number) =>
     b === 0 ? err("division by zero" as const) : ok(a / b)
 
   test("chains Ok results", () => {
-    const result = Result.flatMap(ok(10), (x) => divide(x, 2))
+    const result = flatMap(ok(10), (x) => divide(x, 2))
     expect(result.ok).toBe(true)
     expect(result.ok && result.value).toBe(5)
   })
@@ -105,41 +116,41 @@ describe("Result.flatMap", () => {
     const input = err("first error") as
       | ReturnType<typeof ok<number>>
       | ReturnType<typeof err<string>>
-    const result = Result.flatMap(input, () => ok(99))
+    const result = flatMap(input, () => ok(99))
     expect(result.ok).toBe(false)
     expect(!result.ok && result.error).toBe("first error")
   })
 
   test("returns Err from chained function", () => {
-    const result = Result.flatMap(ok(10), () => err("chained error"))
+    const result = flatMap(ok(10), () => err("chained error"))
     expect(result.ok).toBe(false)
     expect(!result.ok && result.error).toBe("chained error")
   })
 })
 
-describe("Result.unwrapOr", () => {
+describe("unwrapOr", () => {
   test("returns value for Ok", () => {
-    expect(Result.unwrapOr(ok(42), 0)).toBe(42)
+    expect(unwrapOr(ok(42), 0)).toBe(42)
   })
 
   test("returns default for Err", () => {
-    expect(Result.unwrapOr(err("fail"), 0)).toBe(0)
+    expect(unwrapOr(err("fail"), 0)).toBe(0)
   })
 })
 
-describe("Result.unwrapOrElse", () => {
+describe("unwrapOrElse", () => {
   test("returns value for Ok", () => {
-    expect(Result.unwrapOrElse(ok(42), () => 0)).toBe(42)
+    expect(unwrapOrElse(ok(42), () => 0)).toBe(42)
   })
 
   test("computes default from error for Err", () => {
-    expect(Result.unwrapOrElse(err("fail"), (e) => e.length)).toBe(4)
+    expect(unwrapOrElse(err("fail"), (e) => e.length)).toBe(4)
   })
 })
 
-describe("Result.match", () => {
+describe("match", () => {
   test("calls ok handler for Ok", () => {
-    const result = Result.match(ok(42), {
+    const result = match(ok(42), {
       ok: (v) => `value: ${v}`,
       err: (e) => `error: ${e}`,
     })
@@ -147,24 +158,10 @@ describe("Result.match", () => {
   })
 
   test("calls err handler for Err", () => {
-    const result = Result.match(err("fail"), {
+    const result = match(err("fail"), {
       ok: (v) => `value: ${v}`,
       err: (e) => `error: ${e}`,
     })
     expect(result).toBe("error: fail")
-  })
-})
-
-describe("Result.ok and Result.err aliases", () => {
-  test("Result.ok creates Ok result", () => {
-    const result = Result.ok(1)
-    expect(result.ok).toBe(true)
-    expect(result.ok && result.value).toBe(1)
-  })
-
-  test("Result.err creates Err result", () => {
-    const result = Result.err("x")
-    expect(result.ok).toBe(false)
-    expect(!result.ok && result.error).toBe("x")
   })
 })

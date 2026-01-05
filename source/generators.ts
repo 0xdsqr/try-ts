@@ -1,4 +1,4 @@
-import type { Err, Result } from "./result.ts"
+import type { Err, Result } from "./result"
 
 function gen<T, E>(
   fn: () => Generator<Err<E>, Result<T, E>, unknown>,
