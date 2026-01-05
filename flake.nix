@@ -1,13 +1,10 @@
 {
-  description = "hoo";
+  description = "try-ts - Rust-style error handling for TypeScript";
 
   inputs = {
-    # Core Nixpkgs + compatibility
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-compat.url = "github:edolstra/flake-compat";
     flake-compat.flake = false;
-
-    # Developer tools / utilities
     treefmt-nix.url = "github:numtide/treefmt-nix";
     treefmt-nix.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -18,7 +15,7 @@
       nixpkgs,
       treefmt-nix,
       ...
-    }@inputs:
+    }:
     let
       systems = [
         "x86_64-linux"
@@ -30,7 +27,20 @@
     in
     {
       # ------------------------------------------------------------
-      # Development shell (nix develop .)
+      # Packages (nix build)
+      # ------------------------------------------------------------
+      packages = forEachSystem (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = import ./nix/package.nix { inherit pkgs; };
+        }
+      );
+
+      # ------------------------------------------------------------
+      # Development shell (nix develop)
       # ------------------------------------------------------------
       devShells = forEachSystem (
         system:
@@ -50,7 +60,6 @@
 
       # ------------------------------------------------------------
       # Checks (nix flake check)
-      # Runs formatting checks only
       # ------------------------------------------------------------
       checks = forEachSystem (
         system:
@@ -59,6 +68,24 @@
         in
         {
           formatting = (treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix).config.build.check self;
+
+          tests = pkgs.stdenv.mkDerivation {
+            name = "try-ts-tests";
+            src = self;
+            nativeBuildInputs = [ pkgs.bun ];
+            buildPhase = ''
+              export HOME=$(mktemp -d)
+              bun install --frozen-lockfile
+              bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage
+            '';
+            installPhase = ''
+              mkdir -p $out
+              cp -r coverage $out/
+              echo "Tests passed" > $out/result
+            '';
+          };
+
+          build = self.packages.${system}.default;
         }
       );
     };
