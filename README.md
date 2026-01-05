@@ -54,7 +54,7 @@ function divide(a: number, b: number): number {
 - **Exhaustive handling** — TypeScript ensures you handle every case
 
 ```typescript
-import { ok, err, tryPromise, match, genAsync, awaitResult } from "try-ts"
+import { ok, err, tryPromise, match, genAsync, awaitResult } from "@dsqr/try-ts"
 
 // Explicit, typed, composable
 const getUser = (id: string) =>
@@ -77,14 +77,14 @@ const getUser = (id: string) =>
 
 | Package Manager | Command |
 |-----------------|---------|
-| bun | `bun add try-ts` |
-| npm | `npm install try-ts` |
-| pnpm | `pnpm add try-ts` |
+| bun | `bun add @dsqr/try-ts` |
+| npm | `npm install @dsqr/try-ts` |
+| pnpm | `pnpm add @dsqr/try-ts` |
 
 ## ⇁ Quick Start
 
 ```typescript
-import { ok, err, tryPromise, match } from "try-ts"
+import { ok, err, tryPromise, match } from "@dsqr/try-ts"
 
 // Create results
 const success = ok(42)
@@ -141,7 +141,7 @@ if (result.ok) {
 The `gen`/`unwrap` pattern gives you Rust's `?` operator semantics:
 
 ```typescript
-import { gen, unwrap, ok, err } from "try-ts"
+import { gen, unwrap, ok, err } from "@dsqr/try-ts"
 
 const divide = (a: number, b: number): Result<number, "DivisionByZero"> =>
   b === 0 ? err("DivisionByZero") : ok(a / b)
@@ -269,7 +269,7 @@ Built-in error types for common cases:
 | `TimeoutError` | Operation timeouts |
 
 ```typescript
-import { matchError } from "try-ts"
+import { matchError } from "@dsqr/try-ts"
 
 const message = matchError(error, {
   NetworkError: (e) => `Connection failed: ${e.cause}`,

@@ -1,8 +1,8 @@
-# try-ts
+# @dsqr/try-ts
 
-## 0.1.0
+## 0.0.1
 
-### Minor Changes
+### Patch Changes
 
 - Initial release of try-ts - Rust-style error handling for TypeScript.
 
